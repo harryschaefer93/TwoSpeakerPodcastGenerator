@@ -1,0 +1,21 @@
+{
+  "name": "PodcastGen Dev",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [3000, 5173],
+  "postCreateCommand": "npm install && cd client && npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-azure-github-copilot",
+        "ms-azuretools.vscode-bicep",
+        "GitHub.copilot"
+      ]
+    }
+  }
+}

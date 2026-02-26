@@ -1,0 +1,197 @@
+:root {
+  --bg: #fafafa;
+  --panel-bg: #ffffff;
+  --border: #e0e0e0;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
+  --muted: #6b7280;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: #1a1a1a;
+  line-height: 1.5;
+}
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+header { margin-bottom: 24px; }
+header h1 { font-size: 1.75rem; }
+
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.panel h2 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.875rem;
+  font-weight: 500;
+  gap: 4px;
+}
+
+input, textarea, select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  width: 100%;
+}
+
+textarea { resize: vertical; }
+
+button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+button:hover:not(:disabled) { background: var(--primary-hover); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-small {
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.btn-icon {
+  background: transparent;
+  color: var(--muted);
+  padding: 2px 6px;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.btn-danger { color: var(--danger); border-color: var(--danger); }
+
+.muted { color: var(--muted); font-size: 0.8rem; font-weight: 400; }
+.error { color: var(--danger); font-size: 0.85rem; margin-top: 8px; }
+
+/* Script editor */
+.turn-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+.turn-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  border-left: 4px solid var(--primary);
+}
+
+.turn-card.speaker-b { border-left-color: var(--warning); }
+
+.turn-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.turn-header select { width: auto; }
+.turn-actions { display: flex; gap: 4px; }
+
+.json-editor {
+  width: 100%;
+  font-family: "Cascadia Code", "Fira Code", monospace;
+  font-size: 0.85rem;
+}
+
+/* Progress */
+.progress-section { margin-top: 12px; }
+
+.progress-bar-track {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.progress-bar-fill.failed { background: var(--danger); }
+
+.status-label { margin-top: 4px; font-size: 0.85rem; font-weight: 500; }
+.status-label.completed { color: var(--success); }
+.status-label.failed { color: var(--danger); }
+.status-label.synthesizing,
+.status-label.stitching { color: var(--primary); }
+
+/* Audio */
+.download-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+/* Episode history */
+.episode-list { list-style: none; }
+
+.episode-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.episode-item:hover { background: var(--bg); }
+.episode-title { flex: 1; font-weight: 500; }
+
+.badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--border);
+  font-weight: 500;
+}
+
+.badge.completed { background: #dcfce7; color: var(--success); }
+.badge.failed { background: #fee2e2; color: var(--danger); }
+.badge.in-progress { background: #dbeafe; color: var(--primary); }
