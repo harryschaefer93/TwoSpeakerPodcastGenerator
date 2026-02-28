@@ -9,7 +9,7 @@ export function ScriptGenerator({ onGenerated }: Props) {
   const [topic, setTopic] = useState("Azure AI trends for software teams");
   const [title, setTitle] = useState("");
   const [tone, setTone] = useState("");
-  const [targetMinutes, setTargetMinutes] = useState(10);
+  const [targetMinutes, setTargetMinutes] = useState(3);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -65,8 +65,8 @@ export function ScriptGenerator({ onGenerated }: Props) {
           Duration (minutes)
           <input
             type="number"
-            min={8}
-            max={20}
+            min={1}
+            max={60}
             value={targetMinutes}
             onChange={(e) => setTargetMinutes(Number(e.target.value))}
           />

@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    host: true,
+    allowedHosts: true,
     proxy: {
       '/scripts': 'http://localhost:3000',
       '/episodes': 'http://localhost:3000',

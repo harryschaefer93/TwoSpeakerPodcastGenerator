@@ -51,16 +51,19 @@ Important constraints used in code:
 
 - Node.js 22+
 - `ffmpeg` in `PATH` (auto-installed in devcontainer)
-- Azure Speech resource (S0 recommended)
-- Azure Blob container SAS URL with write permissions
+- Azure AI Foundry account with Speech + OpenAI (deploy via `infra/main.bicep`)
+- `az login` for local development (DefaultAzureCredential)
+- RBAC roles: `Cognitive Services User` + `Storage Blob Data Contributor`
 
 ## Environment
 
 Copy `.env.example` to `.env` and set values:
 
-- `SPEECH_KEY`
+All Azure service calls authenticate via `DefaultAzureCredential` (Entra ID).
+For local development, run `az login` before starting the server.
+
 - `SPEECH_REGION`
-- `OUTPUT_CONTAINER_SAS_URL`
+- `OUTPUT_CONTAINER_URL` (bare blob container URL, no SAS token needed)
 - `OUTPUT_CONTAINER_PUBLIC_BASE_URL` (optional base URL for final playback URLs)
 - Optional resilience values:
   - `RETRY_MAX_ATTEMPTS`
@@ -78,7 +81,6 @@ Copy `.env.example` to `.env` and set values:
   - `CORS_ALLOWED_ORIGINS` (comma-separated exact origins)
 - Optional AI generation values:
   - `AI_ENDPOINT`
-  - `AI_API_KEY`
   - `AI_DEPLOYMENT`
   - `AI_API_VERSION`
 
@@ -155,10 +157,77 @@ Get status:
 curl http://localhost:3000/episodes/<episodeId>
 ```
 
+## Deploy Azure infrastructure
+
+The `infra/` directory contains a Bicep template that deploys all required Azure resources:
+
+| Resource | Purpose |
+|---|---|
+| AI Foundry account (AIServices, project-based) | OpenAI chat completions + Speech Batch synthesis |
+| AI Foundry project | Project management in Foundry portal |
+| OpenAI model deployment (gpt-4.1) | Script generation |
+| Storage account + blob container | Episode audio output |
+| Log Analytics workspace + diagnostic settings | Policy-required observability |
+| RBAC role assignments | Managed-identity auth (no API keys needed) |
+
+### Prerequisites
+
+- Azure CLI with Bicep CLI installed (`az bicep install`)
+- A subscription where you have Owner or Contributor + User Access Administrator
+
+### Quick deploy
+
+```bash
+# Edit parameters (names must be globally unique)
+nano infra/main.bicepparam
+
+# Preview what will be created
+az deployment sub what-if \
+  --location eastus2 \
+  --template-file infra/main.bicep \
+  --parameters infra/main.bicepparam
+
+# Deploy
+az deployment sub create \
+  --location eastus2 \
+  --template-file infra/main.bicep \
+  --parameters infra/main.bicepparam
+```
+
+### Post-deploy: populate .env
+
+```bash
+# Grab outputs
+DEP=$(az deployment sub show -n main --query properties.outputs -o json)
+
+# With disableLocalAuth=true (managed identity / Entra ID tokens):
+AI_ENDPOINT=$(echo $DEP | jq -r .aiFoundryEndpoint.value)
+SPEECH_REGION=$(echo $DEP | jq -r .speechRegion.value)
+OUTPUT_CONTAINER_SAS_URL=$(echo $DEP | jq -r .outputContainerUrl.value)
+AI_DEPLOYMENT=$(echo $DEP | jq -r .aiDeploymentName.value)
+
+# With disableLocalAuth=false (API keys for local dev):
+# SPEECH_KEY=$(az cognitiveservices account keys list -g rg-podcastgen -n podcastgen-ai --query key1 -o tsv)
+# AI_API_KEY=$SPEECH_KEY  # same key for AIServices kind
+```
+
+### Policy-safe defaults
+
+The template ships with settings that satisfy common enterprise policies:
+
+- **`disableLocalAuth: true`** — satisfies `CognitiveServicesDisableLocalAuth` and `cognitiveServicesAccountsShouldHaveLocalAuthenticationMethodsDisabled`
+- **`allowSharedKeyAccess: false`** — satisfies `storageAccountsShouldPreventSharedKeyAccess` and `StorageAccountDisableLocalAuth`
+- **`modelSkuName: GlobalStandard`** — avoids `OpenAI_BlockProvisionedCapacity` deny
+- **Diagnostic settings on all resources** — satisfies `EnableCognitiveServicesDiagnostics`, `EnableHubsAIFoundryDiagnostics`, `EnableProjectsAIFoundryDiagnostics`
+- **`allowBlobPublicAccess: false`** — satisfies `StorageDisallowPublicAccess`
+- **HTTPS-only + TLS 1.2** — satisfies `secureTransferToStorageAccountMonitoring`
+
+Set `disableLocalAuth: false` and `allowSharedKeyAccess: true` in `infra/main.bicepparam` to allow API-key auth during local development.
+
 ## Cloud-ready next steps
 
 - Persist metadata in Cosmos DB
 - Move orchestration to Azure Functions or Container Apps job workers
-- Use Managed Identity + Key Vault for secrets
-- Add CI/CD with `azd` and infrastructure as code (Bicep)
+- Migrate app code to `@azure/identity` DefaultAzureCredential for full managed-identity auth
+- Add CI/CD with `azd`
 - Add retries with exponential backoff for Speech 429/5xx

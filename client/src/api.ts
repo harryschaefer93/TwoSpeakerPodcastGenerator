@@ -57,7 +57,8 @@ const jsonPost = async <T>(url: string, body: unknown): Promise<T> => {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error ?? `Request failed: ${res.status}`);
+    const msg = typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
+    throw new Error(msg ?? `Request failed: ${res.status}`);
   }
   return res.json() as Promise<T>;
 };

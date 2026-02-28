@@ -14,7 +14,9 @@
     "Added resilient retry/backoff with jitter for Speech transient failures",
     "Added API authentication middleware with API key and JWT modes",
     "Added CORS allowlist controls and stricter remote media URL safeguards",
-    "Added React + Vite + TypeScript frontend in client/ with visual script editor, synthesis progress, audio player, and episode history"
+    "Added React + Vite + TypeScript frontend in client/ with visual script editor, synthesis progress, audio player, and episode history",
+    "Added Bicep IaC (infra/) for policy-safe deployment of AI Foundry (project-based), Speech, Storage, diagnostics, and RBAC",
+    "Migrated all Azure auth from API keys/SAS to DefaultAzureCredential (identity-only) via @azure/identity"
   ],
   "todo": [
     "Add webhook/callback option instead of polling",

@@ -1,4 +1,5 @@
 import { config } from "../config.js";
+import { getBearerToken } from "./identity.js";
 
 export type BatchStatus = "NotStarted" | "Running" | "Succeeded" | "Failed";
 
@@ -16,13 +17,22 @@ export interface BatchSynthesisJob {
   };
 }
 
-const baseUrl = (): string =>
-  `https://${config.speech.region}.api.cognitive.microsoft.com/texttospeech/batchsyntheses`;
+const baseUrl = (): string => {
+  // Prefer the resource-specific custom-domain endpoint (required for Entra ID / bearer-token auth).
+  // Fall back to the regional endpoint only when SPEECH_ENDPOINT is not set.
+  const origin = config.speech.endpoint
+    ? config.speech.endpoint.replace(/\/$/, "")
+    : `https://${config.speech.region}.api.cognitive.microsoft.com`;
+  return `${origin}/texttospeech/batchsyntheses`;
+};
 
-const headers = (): Record<string, string> => ({
-  "Content-Type": "application/json",
-  "Ocp-Apim-Subscription-Key": config.speech.key
-});
+const headers = async (): Promise<Record<string, string>> => {
+  const token = await getBearerToken();
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`
+  };
+};
 
 const sleep = async (ms: number): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -70,28 +80,48 @@ const fetchWithRetry = async (
   );
 };
 
+const hasSasToken = (containerUrl: string): boolean => {
+  try {
+    const parsed = new URL(containerUrl);
+    return parsed.searchParams.has("sv") || parsed.searchParams.has("sig");
+  } catch {
+    return false;
+  }
+};
+
 export const createBatchSynthesisJob = async (jobId: string, ssmlInputs: string[]): Promise<BatchSynthesisJob> => {
   const url = `${baseUrl()}/${jobId}?api-version=${config.speech.apiVersion}`;
+
+  const hasDestination = config.speech.outputContainerUrl && hasSasToken(config.speech.outputContainerUrl);
+
+  const properties: Record<string, unknown> = {
+    outputFormat: config.speech.outputFormat,
+    concatenateResult: false,
+    wordBoundaryEnabled: false,
+    sentenceBoundaryEnabled: false,
+    timeToLiveInHours: 744
+  };
+
+  // Only set destinationContainerUrl + decompressOutputFiles when
+  // the URL includes a SAS token.  Without a SAS token the batch
+  // service uses its own managed storage and returns a result URL.
+  if (hasDestination) {
+    properties.destinationContainerUrl = config.speech.outputContainerUrl;
+    properties.decompressOutputFiles = true;
+  }
+
   const body = {
     description: `PodcastGen synthesis ${jobId}`,
     inputKind: "SSML",
     inputs: ssmlInputs.map((content) => ({ content })),
-    properties: {
-      outputFormat: config.speech.outputFormat,
-      destinationContainerUrl: config.speech.outputContainerSasUrl,
-      concatenateResult: false,
-      decompressOutputFiles: true,
-      wordBoundaryEnabled: false,
-      sentenceBoundaryEnabled: false,
-      timeToLiveInHours: 744
-    }
+    properties
   };
 
   const response = await fetchWithRetry(
     url,
     {
       method: "PUT",
-      headers: headers(),
+      headers: await headers(),
       body: JSON.stringify(body)
     },
     `create batch synthesis job ${jobId}`
@@ -111,7 +141,7 @@ export const getBatchSynthesisJob = async (jobId: string): Promise<BatchSynthesi
     url,
     {
       method: "GET",
-      headers: headers()
+      headers: await headers()
     },
     `get batch synthesis job ${jobId}`
   );

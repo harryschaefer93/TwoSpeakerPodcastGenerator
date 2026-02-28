@@ -19,11 +19,11 @@ export const config = {
     maxDelayMs: Number(process.env.RETRY_MAX_DELAY_MS ?? 10000)
   },
   speech: {
-    key: process.env.SPEECH_KEY ?? "",
     region: process.env.SPEECH_REGION ?? "",
+    endpoint: process.env.SPEECH_ENDPOINT ?? "",
     apiVersion: process.env.SPEECH_API_VERSION ?? "2024-04-01",
     outputFormat: process.env.OUTPUT_AUDIO_FORMAT ?? "audio-24khz-48kbitrate-mono-mp3",
-    outputContainerSasUrl: process.env.OUTPUT_CONTAINER_SAS_URL ?? "",
+    outputContainerUrl: process.env.OUTPUT_CONTAINER_URL ?? "",
     outputContainerPublicBaseUrl: process.env.OUTPUT_CONTAINER_PUBLIC_BASE_URL ?? ""
   },
   voice: {
@@ -39,7 +39,6 @@ export const config = {
   },
   ai: {
     endpoint: process.env.AI_ENDPOINT ?? "",
-    apiKey: process.env.AI_API_KEY ?? "",
     deployment: process.env.AI_DEPLOYMENT ?? "gpt-4.1",
     apiVersion: process.env.AI_API_VERSION ?? "2024-10-21"
   },
@@ -70,7 +69,6 @@ export const config = {
 };
 
 export const assertSpeechConfig = (): void => {
-  required("SPEECH_KEY");
-  required("SPEECH_REGION");
-  required("OUTPUT_CONTAINER_SAS_URL");
+  required("SPEECH_ENDPOINT");
+  required("OUTPUT_CONTAINER_URL");
 };

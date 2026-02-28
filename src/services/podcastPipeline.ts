@@ -87,9 +87,12 @@ const processChunkJobs = async (
     }
 
     const resultUrl = resolveBatchResultUrl(result);
+    console.log(`[pipeline] Downloading result for ${jobId}: ${resultUrl.substring(0, 120)}...`);
     const zipPath = path.join(outDir, `${jobId}.zip`);
     await downloadFile(resultUrl, zipPath);
+    console.log(`[pipeline] Downloaded ZIP to ${zipPath}`);
     const audioPath = await extractFirstAudio(zipPath, path.join(outDir, jobId));
+    console.log(`[pipeline] Extracted audio: ${audioPath}`);
     audioPaths.push(audioPath);
   }
 
@@ -104,6 +107,7 @@ export const runEpisodePipeline = async (episodeId: string, request: EpisodeRequ
 
     const chunkAudioFiles = await processChunkJobs(episodeId, request, chunkSsmls);
 
+    console.log(`[pipeline] All chunks done, stitching ${chunkAudioFiles.length} files...`);
     await episodeStore.update(episodeId, { status: "Stitching" });
 
     const finalLocalPath = await stitchAudio(
@@ -113,13 +117,24 @@ export const runEpisodePipeline = async (episodeId: string, request: EpisodeRequ
       request.outroMusicUrl
     );
 
+    console.log(`[pipeline] Stitched to ${finalLocalPath}, uploading...`);
     const blobPath = `episodes/${episodeId}/final.mp3`;
-    const finalAudioUrl = await uploadFinalAudio(finalLocalPath, blobPath);
+    let finalAudioUrl: string;
+    try {
+      finalAudioUrl = await uploadFinalAudio(finalLocalPath, blobPath);
+      console.log(`[pipeline] Upload complete: ${finalAudioUrl}`);
+    } catch (uploadError) {
+      // Blob upload failed (e.g. network restrictions) — fall back to local serving.
+      const msg = uploadError instanceof Error ? uploadError.message : String(uploadError);
+      console.warn(`[pipeline] Blob upload failed, serving locally: ${msg}`);
+      finalAudioUrl = `/episodes/${episodeId}/audio`;
+    }
 
     await episodeStore.update(episodeId, {
       status: "Completed",
       finalAudioUrl,
-      finalBlobPath: blobPath
+      finalBlobPath: blobPath,
+      finalLocalPath
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown synthesis error";

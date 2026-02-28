@@ -21,7 +21,7 @@ const scriptGenSchema = z.object({
   topic: z.string().min(3),
   title: z.string().optional(),
   tone: z.string().optional(),
-  targetMinutes: z.number().int().min(8).max(20).optional()
+  targetMinutes: z.number().int().min(1).max(60).optional()
 });
 
 const turnSchema = z.object({
@@ -80,6 +80,15 @@ app.get("/episodes/:id", async (req, res) => {
   }
 
   return res.status(200).json(episode);
+});
+
+app.get("/episodes/:id/audio", async (req, res) => {
+  const episode = await episodeStore.get(req.params.id);
+  if (!episode?.finalLocalPath) {
+    return res.status(404).json({ error: "Audio not available" });
+  }
+
+  return res.sendFile(path.resolve(episode.finalLocalPath));
 });
 
 app.get("/health", (_req, res) => {

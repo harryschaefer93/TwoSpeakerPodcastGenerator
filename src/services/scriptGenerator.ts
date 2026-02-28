@@ -1,5 +1,6 @@
 import type { ScriptGenerationRequest, ScriptGenerationResponse, ScriptTurn } from "../types.js";
 import { config } from "../config.js";
+import { getBearerToken } from "./identity.js";
 
 const parseScriptFromText = (raw: string): ScriptTurn[] => {
   const lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
@@ -19,7 +20,7 @@ const parseScriptFromText = (raw: string): ScriptTurn[] => {
 const fallbackScript = (request: ScriptGenerationRequest): ScriptGenerationResponse => {
   const title = request.title || `Podcast: ${request.topic}`;
   const targetMinutes = request.targetMinutes ?? 10;
-  const turns = Math.max(80, targetMinutes * 10);
+  const turns = targetMinutes * 10;
   const script: ScriptTurn[] = [];
 
   for (let index = 0; index < turns; index += 1) {
@@ -42,29 +43,38 @@ const fallbackScript = (request: ScriptGenerationRequest): ScriptGenerationRespo
 export const generateScript = async (
   request: ScriptGenerationRequest
 ): Promise<ScriptGenerationResponse> => {
-  if (!config.ai.endpoint || !config.ai.apiKey || !config.ai.deployment) {
+  if (!config.ai.endpoint || !config.ai.deployment) {
     return fallbackScript(request);
   }
 
   const targetMinutes = request.targetMinutes ?? 10;
-  const approxWords = Math.max(1300, targetMinutes * 140);
+  const approxWords = targetMinutes * 140;
 
   const prompt = [
     `Create a podcast script with exactly two speakers named Speaker A and Speaker B.`,
     `Topic: ${request.topic}.`,
     `Tone: ${request.tone ?? "conversational and insightful"}.`,
-    `Target length: roughly ${targetMinutes} minutes (~${approxWords} words).`,
+    `Target length: EXACTLY ${targetMinutes} minutes of spoken audio (~${approxWords} words total). Do NOT exceed ${approxWords} words.`,
     `Output ONLY dialogue lines and use this exact format per line: Speaker A: ... or Speaker B: ...`,
     `Alternate speakers naturally and include realistic conversational pacing.`
   ].join(" ");
 
-  const url = `${config.ai.endpoint}/openai/deployments/${config.ai.deployment}/chat/completions?api-version=${config.ai.apiVersion}`;
+  const baseEndpoint = config.ai.endpoint.replace(/\/+$/, "");
+  const url = `${baseEndpoint}/openai/deployments/${config.ai.deployment}/chat/completions?api-version=${config.ai.apiVersion}`;
+
+  let token: string;
+  try {
+    token = await getBearerToken();
+  } catch (error) {
+    console.warn("[scriptGenerator] Failed to acquire bearer token, using fallback:", error instanceof Error ? error.message : error);
+    return fallbackScript(request);
+  }
 
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "api-key": config.ai.apiKey
+      Authorization: `Bearer ${token}`
     },
     body: JSON.stringify({
       messages: [
@@ -72,11 +82,12 @@ export const generateScript = async (
         { role: "user", content: prompt }
       ],
       temperature: 0.8,
-      max_tokens: 6000
+      max_tokens: Math.min(6000, Math.ceil(approxWords * 1.5))
     })
   });
 
   if (!response.ok) {
+    console.warn(`[scriptGenerator] AI call failed: ${response.status} ${response.statusText}`);
     return fallbackScript(request);
   }
 

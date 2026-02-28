@@ -32,6 +32,7 @@ export interface EpisodeRecord {
   error?: string;
   finalAudioUrl?: string;
   finalBlobPath?: string;
+  finalLocalPath?: string;
 }
 
 export interface ScriptGenerationRequest {
