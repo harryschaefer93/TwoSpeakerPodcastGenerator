@@ -9,6 +9,8 @@ PodcastGen is a local-first Node.js + TypeScript app that:
 
 ## Architecture
 
+![Architecture Diagram](docs/diagrams/architecture-overview.png)
+
 - `POST /scripts/generate` generates `Speaker A` / `Speaker B` script JSON
 - `POST /episodes` accepts approved script and starts async synthesis
 - `GET /episodes/:id` returns status and final URL when complete
