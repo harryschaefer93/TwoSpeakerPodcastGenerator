@@ -25,13 +25,15 @@ A React + Vite + TypeScript SPA with:
 In development, the Vite dev server proxies API routes to Express.
 
 ### Core modules
+- `src/services/identity.ts` - DefaultAzureCredential singleton and bearer-token acquisition
 - `src/services/ssml.ts` - SSML generation (multi-talker + fallback voices)
 - `src/services/chunker.ts` - turn chunking for 2–6 minute segments
 - `src/services/speechBatchClient.ts` - Batch synthesis REST operations
-- `src/services/storage.ts` - download/upload helpers for Blob SAS flow
+- `src/services/storage.ts` - download/upload helpers for Blob storage
 - `src/services/stitcher.ts` - ffmpeg normalization + concatenation
 - `src/services/podcastPipeline.ts` - end-to-end orchestration
 - `src/services/episodeStore.ts` - local JSON metadata store (`data/episodes.json`)
+- `src/services/auth.ts` - Express middleware for API key / JWT authentication
 
 ## Microsoft Learn-aligned implementation notes
 
@@ -62,7 +64,8 @@ Copy `.env.example` to `.env` and set values:
 All Azure service calls authenticate via `DefaultAzureCredential` (Entra ID).
 For local development, run `az login` before starting the server.
 
-- `SPEECH_REGION`
+- `SPEECH_ENDPOINT` (custom-domain endpoint for your AI Foundry / Speech resource, e.g. `https://<account>.cognitiveservices.azure.com`)
+- `SPEECH_REGION` (fallback when `SPEECH_ENDPOINT` is not set)
 - `OUTPUT_CONTAINER_URL` (bare blob container URL, no SAS token needed)
 - `OUTPUT_CONTAINER_PUBLIC_BASE_URL` (optional base URL for final playback URLs)
 - Optional resilience values:
@@ -202,8 +205,9 @@ DEP=$(az deployment sub show -n main --query properties.outputs -o json)
 
 # With disableLocalAuth=true (managed identity / Entra ID tokens):
 AI_ENDPOINT=$(echo $DEP | jq -r .aiFoundryEndpoint.value)
+SPEECH_ENDPOINT=$AI_ENDPOINT  # Same AIServices resource serves both OpenAI and Speech
 SPEECH_REGION=$(echo $DEP | jq -r .speechRegion.value)
-OUTPUT_CONTAINER_SAS_URL=$(echo $DEP | jq -r .outputContainerUrl.value)
+OUTPUT_CONTAINER_URL=$(echo $DEP | jq -r .outputContainerUrl.value)
 AI_DEPLOYMENT=$(echo $DEP | jq -r .aiDeploymentName.value)
 
 # With disableLocalAuth=false (API keys for local dev):
@@ -226,8 +230,8 @@ Set `disableLocalAuth: false` and `allowSharedKeyAccess: true` in `infra/main.bi
 
 ## Cloud-ready next steps
 
-- Persist metadata in Cosmos DB
+- Persist metadata in Cosmos DB (currently uses a local JSON file)
 - Move orchestration to Azure Functions or Container Apps job workers
-- Migrate app code to `@azure/identity` DefaultAzureCredential for full managed-identity auth
+- Add webhook/callback option instead of client polling
 - Add CI/CD with `azd`
-- Add retries with exponential backoff for Speech 429/5xx
+- Add automated tests

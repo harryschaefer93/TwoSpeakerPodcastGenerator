@@ -311,7 +311,7 @@ output speechRegion string = location
 @description('Storage account name.')
 output storageAccountNameOutput string = storage.name
 
-@description('Blob container URL for episode output (use as OUTPUT_CONTAINER_SAS_URL with RBAC — no SAS query string needed).')
+@description('Blob container URL for episode output (use as OUTPUT_CONTAINER_URL with RBAC — no SAS query string needed).')
 output outputContainerUrl string = '${storage.properties.primaryEndpoints.blob}${containerName}'
 
 @description('AI Foundry system-assigned identity principal ID.')

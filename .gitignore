@@ -5,3 +5,4 @@ tmp/
 data/
 *.log
 .DS_Store
+manifest.json

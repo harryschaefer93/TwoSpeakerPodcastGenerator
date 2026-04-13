@@ -58,7 +58,8 @@ Produces podcast episodes through a multi-step async pipeline:
 | `ssml.ts` | Builds SSML; multi-talker `<mstts:dialog>` mode or two-voice fallback |
 | `chunker.ts` | Splits turns into chunks ≤ 3 600 chars (text + 40-char overhead per turn) |
 | `stitcher.ts` | ffmpeg normalisation (mono, 24 kHz, PCM) → concat → MP3 encode at 96 kbps |
-| `storage.ts` | Blob download/upload via `@azure/storage-blob`; resolves SAS-relative result paths |
+| `storage.ts` | Blob download/upload via `@azure/storage-blob`; uses DefaultAzureCredential (no SAS tokens) |
+| `identity.ts` | Singleton `DefaultAzureCredential` and bearer-token acquisition for Cognitive Services |
 | `episodeStore.ts` | Read/write `data/episodes.json`; no database |
 | `auth.ts` | Express middleware; supports `none`, `api-key`, `jwt`, `api-key-or-jwt` modes |
 
@@ -66,7 +67,7 @@ Produces podcast episodes through a multi-step async pipeline:
 
 - **TypeScript strict mode**, ES2022 target, NodeNext module resolution. All imports use `.js` extensions (required by NodeNext).
 - **No classes** — the codebase uses plain functions and object literals (`episodeStore` is an object with async methods, not a class).
-- **Config is centralised** in `config.ts` via `dotenv`. Every env var has a sensible default except the three checked by `assertSpeechConfig()`: `SPEECH_KEY`, `SPEECH_REGION`, `OUTPUT_CONTAINER_SAS_URL`.
+- **Config is centralised** in `config.ts` via `dotenv`. Every env var has a sensible default except the two checked by `assertSpeechConfig()`: `SPEECH_ENDPOINT`, `OUTPUT_CONTAINER_URL`.
 - **Zod** validates all request bodies at the route level in `index.ts`.
 - **Error pattern**: pipeline errors are caught and written to the episode record's `error` field; they don't crash the server.
 - **SSRF protection** in `stitcher.ts`: remote intro/outro URLs must be `https://`, cannot target private/loopback IPs, and are checked against `MEDIA_ALLOWED_HOSTS` when set.
