@@ -6,21 +6,21 @@ Out:  docs/diagrams/architecture-overview.png
 """
 
 from diagrams import Diagram, Cluster, Edge
-from diagrams.onprem.client import User
 from diagrams.azure.aimachinelearning import AzureOpenai, SpeechServices
 from diagrams.azure.storage import BlobStorage
 from diagrams.programming.framework import React
+from diagrams.programming.language import TypeScript
 
 graph_attr = {
     "fontsize": "28",
     "bgcolor": "white",
-    "pad": "0.8",
-    "nodesep": "1.0",
-    "ranksep": "2.0",
+    "pad": "1.0",
+    "nodesep": "1.4",
+    "ranksep": "2.2",
     "dpi": "150",
     "fontname": "Segoe UI Bold",
     "splines": "ortho",
-    "label": "PodcastGen — Architecture\nAll Azure auth via DefaultAzureCredential (Entra ID) — no API keys or SAS tokens",
+    "label": "PodcastGen — Architecture\nAll Azure auth via DefaultAzureCredential (Entra ID)",
     "labelloc": "t",
     "labeljust": "c",
     "fontcolor": "#333333",
@@ -46,23 +46,22 @@ cluster_style = {
     "pencolor": "#7f7f7f",
     "penwidth": "1.5",
     "bgcolor": "#f2f2f200",
+    "margin": "36",
+    "labeljust": "l",
 }
 
 with Diagram(
     "",
     filename="docs/diagrams/architecture-overview",
     show=False,
-    direction="LR",
+    direction="TB",
     graph_attr=graph_attr,
     node_attr=node_attr,
     edge_attr=edge_attr,
     outformat=["png"],
 ):
     react = React("React SPA\n(Vite + TS)")
-
-    with Cluster("Express 5 API  (Node.js + TypeScript)", graph_attr=cluster_style):
-        from diagrams.programming.language import TypeScript
-        api = TypeScript("Podcast\nPipeline")
+    api = TypeScript("Express 5 API\n(Podcast Pipeline)")
 
     with Cluster("Azure AI Foundry", graph_attr=cluster_style):
         openai = AzureOpenai("Azure OpenAI\n(GPT-4.1)")
@@ -70,9 +69,9 @@ with Diagram(
 
     blob = BlobStorage("Blob Storage\n(Episode Audio)")
 
-    # Pipeline flow
-    react >> Edge(label="  ①  Generate Script  ") >> api
+    # Clean linear pipeline — TB direction avoids crossing edges
+    react >> Edge(label="  ①  POST /scripts/generate  ") >> api
     api >> Edge(label="  ②  Chat Completions  ") >> openai
     api >> Edge(label="  ③  Batch Synthesis (SSML)  ") >> speech
     speech >> Edge(label="  ④  Result ZIPs  ") >> blob
-    api >> Edge(label="  ⑤  ffmpeg Stitch → Upload MP3  ") >> blob
+    api >> Edge(label="  ⑤  Stitch & Upload MP3  ") >> blob
