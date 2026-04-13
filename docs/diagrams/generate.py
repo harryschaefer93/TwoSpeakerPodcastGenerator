@@ -15,8 +15,8 @@ graph_attr = {
     "fontsize": "28",
     "bgcolor": "white",
     "pad": "1.0",
-    "nodesep": "1.4",
-    "ranksep": "2.2",
+    "nodesep": "1.2",
+    "ranksep": "2.5",
     "dpi": "150",
     "fontname": "Segoe UI Bold",
     "splines": "ortho",
@@ -32,7 +32,7 @@ node_attr = {
 }
 
 edge_attr = {
-    "fontsize": "12",
+    "fontsize": "11",
     "fontname": "Segoe UI Bold",
     "color": "#000000",
     "penwidth": "1.5",
@@ -54,14 +54,16 @@ with Diagram(
     "",
     filename="docs/diagrams/architecture-overview",
     show=False,
-    direction="TB",
+    direction="LR",
     graph_attr=graph_attr,
     node_attr=node_attr,
     edge_attr=edge_attr,
     outformat=["png"],
 ):
     react = React("React SPA\n(Vite + TS)")
-    api = TypeScript("Express 5 API\n(Podcast Pipeline)")
+
+    with Cluster("Express 5 API  (Node.js + TypeScript)", graph_attr=cluster_style):
+        api = TypeScript("Podcast\nPipeline")
 
     with Cluster("Azure AI Foundry", graph_attr=cluster_style):
         openai = AzureOpenai("Azure OpenAI\n(GPT-4.1)")
@@ -69,9 +71,9 @@ with Diagram(
 
     blob = BlobStorage("Blob Storage\n(Episode Audio)")
 
-    # Clean linear pipeline — TB direction avoids crossing edges
-    react >> Edge(label="  ①  POST /scripts/generate  ") >> api
-    api >> Edge(label="  ②  Chat Completions  ") >> openai
-    api >> Edge(label="  ③  Batch Synthesis (SSML)  ") >> speech
-    speech >> Edge(label="  ④  Result ZIPs  ") >> blob
-    api >> Edge(label="  ⑤  Stitch & Upload MP3  ") >> blob
+    # Trailing \n in labels pushes text above the edge line
+    react >> Edge(label="①  Generate Script\n ") >> api
+    api >> Edge(label="②  Chat Completions\n ") >> openai
+    api >> Edge(label="③  Batch Synthesis\n ") >> speech
+    speech >> Edge(label="④  Result ZIPs\n ") >> blob
+    api >> Edge(label="⑤  Stitch & Upload MP3\n ") >> blob
