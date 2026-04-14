@@ -7,6 +7,32 @@ PodcastGen is a local-first Node.js + TypeScript app that:
 4. Polls for completion, stitches chunk audio into a final MP3
 5. Uploads the final file to Azure Blob Storage and returns a playable/downloadable URL
 
+## Deploy to Azure
+
+The fastest way to get PodcastGen running is with the [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/):
+
+```bash
+azd auth login
+azd up
+```
+
+This provisions all Azure infrastructure and deploys the app in one command. You'll be prompted for:
+- **Azure subscription** and **region**
+- **`aiFoundryName`** — globally unique name for the AI Foundry hub
+- **`storageAccountName`** — globally unique storage account name
+- **`acrName`** — globally unique Container Registry name (alphanumeric only)
+
+| Resource | SKU | Purpose |
+|---|---|---|
+| AI Foundry (AIServices) | S0 | OpenAI chat completions + Speech Batch synthesis |
+| Storage Account | Standard_LRS | Episode audio blob storage |
+| Container Registry | Basic | Docker image hosting |
+| Container Apps Environment | Consumption | Serverless compute |
+| Container App | 0.5 vCPU / 1 GiB | PodcastGen Express server |
+| Log Analytics Workspace | PerGB2018 | Diagnostics and logging |
+
+The Container App uses a **system-assigned managed identity** with least-privilege RBAC — no API keys or SAS tokens needed. Container Apps scales to zero when idle.
+
 ## Architecture
 
 ![Architecture Diagram](docs/diagrams/architecture-overview.png)
@@ -162,17 +188,16 @@ Get status:
 curl http://localhost:3000/episodes/<episodeId>
 ```
 
-## Deploy Azure infrastructure
+## Deploy Azure infrastructure (manual)
 
-The `infra/` directory contains a Bicep template that deploys all required Azure resources:
+For more control, deploy infrastructure separately using the Azure CLI:
 
 | Resource | Purpose |
 |---|---|
 | AI Foundry account (AIServices, project-based) | OpenAI chat completions + Speech Batch synthesis |
-| AI Foundry project | Project management in Foundry portal |
-| OpenAI model deployment (gpt-4.1) | Script generation |
+| Container Registry + Container Apps | Hosting the PodcastGen app |
 | Storage account + blob container | Episode audio output |
-| Log Analytics workspace + diagnostic settings | Policy-required observability |
+| Log Analytics + diagnostic settings | Observability |
 | RBAC role assignments | Managed-identity auth (no API keys needed) |
 
 ### Prerequisites

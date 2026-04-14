@@ -65,6 +65,9 @@ param appPrincipalId string = ''
 @allowed(['User', 'ServicePrincipal', 'Group'])
 param appPrincipalType string = 'ServicePrincipal'
 
+@description('Globally unique name for the Azure Container Registry (alphanumeric only, 5-50 chars).')
+param acrName string
+
 @description('Tags applied to every resource (helps satisfy tagging policies).')
 param tags object = {}
 
@@ -97,6 +100,38 @@ module aiStack 'modules/ai-stack.bicep' = {
     tags: tags
   }
 }
+
+// ─── Module: Hosting (Container Apps) ────────────────────────────────
+
+module hosting 'modules/hosting.bicep' = {
+  scope: rg
+  params: {
+    location: location
+    baseName: aiFoundryName
+    acrName: acrName
+    aiFoundryName: aiFoundryName
+    storageAccountName: storageAccountName
+    logAnalyticsWorkspaceName: aiStack.outputs.logAnalyticsWorkspaceName
+    speechEndpoint: aiStack.outputs.aiFoundryEndpoint
+    outputContainerUrl: aiStack.outputs.outputContainerUrl
+    aiEndpoint: aiStack.outputs.aiFoundryEndpoint
+    aiDeployment: aiStack.outputs.aiDeploymentName
+    tags: tags
+  }
+}
+
+// ─── Outputs ─────────────────────────────────────────────────────────
+
+@description('Container App URL.')
+output containerAppUrl string = hosting.outputs.containerAppUrl
+
+@description('ACR login server.')
+output acrLoginServer string = hosting.outputs.acrLoginServer
+
+// azd-convention outputs (auto-wired by azd deploy)
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = hosting.outputs.acrLoginServer
+output AZURE_CONTAINER_APP_NAME string = hosting.outputs.containerAppName
+output AZURE_CONTAINER_APPS_ENVIRONMENT_NAME string = hosting.outputs.containerAppsEnvironmentName
 
 // ─── Outputs (map to PodcastGen .env) ────────────────────────────────
 

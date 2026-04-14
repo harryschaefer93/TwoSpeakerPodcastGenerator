@@ -319,3 +319,6 @@ output aiFoundryPrincipalId string = aiFoundry.identity.principalId
 
 @description('Deployed model name (maps to AI_DEPLOYMENT).')
 output aiDeploymentName string = modelDeployment.name
+
+@description('Log Analytics workspace name (for hosting module reference).')
+output logAnalyticsWorkspaceName string = logAnalytics.name

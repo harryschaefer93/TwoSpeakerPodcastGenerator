@@ -1,0 +1,17 @@
+# azure.yaml — Azure Developer CLI (azd) configuration for PodcastGen
+name: podcastgen
+metadata:
+  template: podcastgen
+
+infra:
+  provider: bicep
+  path: infra
+
+services:
+  podcastgen:
+    project: .
+    host: containerapp
+    language: ts
+    docker:
+      path: ./Dockerfile
+      context: .

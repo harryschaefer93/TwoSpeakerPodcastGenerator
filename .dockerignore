@@ -1,0 +1,15 @@
+node_modules
+client/node_modules
+dist
+client/dist
+tmp
+data
+.git
+.gitignore
+.devcontainer
+.env
+.env.*
+*.md
+docs
+infra
+.vscode

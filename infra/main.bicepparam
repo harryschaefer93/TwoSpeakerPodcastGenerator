@@ -17,6 +17,7 @@ param resourceGroupName = 'rg-podcastgen'
 param location          = 'eastus2'
 param aiFoundryName     = 'podcastgen-ai'
 param storageAccountName = 'podcastgenstore'
+param acrName             = 'acrpodcastgen'
 
 // ─── Policy-safe defaults (override as needed) ───────────────────────
 
