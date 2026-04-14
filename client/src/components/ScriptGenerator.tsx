@@ -3,10 +3,13 @@ import { api, type ScriptGenerationResponse } from "../api";
 
 interface Props {
   onGenerated: (result: ScriptGenerationResponse) => void;
+  documentId?: string;
+  themes?: string[];
 }
 
-export function ScriptGenerator({ onGenerated }: Props) {
-  const [topic, setTopic] = useState("Azure AI trends for software teams");
+export function ScriptGenerator({ onGenerated, documentId, themes }: Props) {
+  const isDocumentMode = Boolean(documentId);
+  const [topic, setTopic] = useState(isDocumentMode ? "Discuss the uploaded document" : "Azure AI trends for software teams");
   const [title, setTitle] = useState("");
   const [tone, setTone] = useState("");
   const [targetMinutes, setTargetMinutes] = useState(3);
@@ -22,6 +25,8 @@ export function ScriptGenerator({ onGenerated }: Props) {
         title: title || undefined,
         tone: tone || undefined,
         targetMinutes,
+        documentId: documentId || undefined,
+        themes: themes?.length ? themes : undefined,
       });
       onGenerated(result);
     } catch (err) {
@@ -31,16 +36,23 @@ export function ScriptGenerator({ onGenerated }: Props) {
     }
   };
 
+  const stepNumber = isDocumentMode ? 3 : 1;
+
   return (
     <section className="panel">
-      <h2>1. Generate Script</h2>
+      <h2>{stepNumber}. Generate Script</h2>
+      {isDocumentMode && (
+        <p className="muted" style={{ marginBottom: 12 }}>
+          The script will be grounded in your uploaded document{themes?.length ? ` with ${themes.length} themes guiding the discussion` : ""}.
+        </p>
+      )}
       <div className="form-row">
         <label>
-          Topic
+          {isDocumentMode ? "Focus / angle" : "Topic"}
           <input
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="What's the podcast about?"
+            placeholder={isDocumentMode ? "What angle should the hosts focus on?" : "What's the podcast about?"}
           />
         </label>
         <label>

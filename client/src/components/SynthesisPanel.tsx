@@ -5,6 +5,7 @@ interface Props {
   title: string;
   script: ScriptTurn[];
   onComplete: (episode: EpisodeRecord) => void;
+  stepOffset?: number;
 }
 
 const STATUS_STEPS: EpisodeStatus[] = ["Queued", "Synthesizing", "Stitching", "Completed"];
@@ -15,7 +16,7 @@ function statusProgress(status: EpisodeStatus): number {
   return idx >= 0 ? ((idx + 1) / STATUS_STEPS.length) * 100 : 0;
 }
 
-export function SynthesisPanel({ title, script, onComplete }: Props) {
+export function SynthesisPanel({ title, script, onComplete, stepOffset = 2 }: Props) {
   const [introUrl, setIntroUrl] = useState("");
   const [outroUrl, setOutroUrl] = useState("");
   const [episode, setEpisode] = useState<EpisodeRecord | null>(null);
@@ -70,7 +71,7 @@ export function SynthesisPanel({ title, script, onComplete }: Props) {
 
   return (
     <section className="panel">
-      <h2>3. Synthesize</h2>
+      <h2>{stepOffset + 1}. Synthesize</h2>
       <div className="form-row">
         <label>
           Intro music URL <span className="muted">(optional, https)</span>

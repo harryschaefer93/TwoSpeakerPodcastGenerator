@@ -8,11 +8,24 @@ export interface ScriptGenerationRequest {
   title?: string;
   tone?: string;
   targetMinutes?: number;
+  documentId?: string;
+  themes?: string[];
 }
 
 export interface ScriptGenerationResponse {
   title: string;
   script: ScriptTurn[];
+}
+
+export interface DocumentUploadResponse {
+  documentId: string;
+  filename: string;
+  charCount: number;
+  pageCount?: number;
+}
+
+export interface ThemesResponse {
+  themes: string[];
 }
 
 export interface EpisodeCreateRequest {
@@ -64,6 +77,22 @@ const jsonPost = async <T>(url: string, body: unknown): Promise<T> => {
 };
 
 export const api = {
+  async uploadDocument(file: File): Promise<DocumentUploadResponse> {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/documents/upload", { method: "POST", body: form });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      const msg = typeof err.error === "string" ? err.error : JSON.stringify(err.error);
+      throw new Error(msg ?? `Upload failed: ${res.status}`);
+    }
+    return res.json() as Promise<DocumentUploadResponse>;
+  },
+
+  async extractThemes(documentId: string): Promise<ThemesResponse> {
+    return jsonPost("/scripts/themes", { documentId });
+  },
+
   generateScript(req: ScriptGenerationRequest): Promise<ScriptGenerationResponse> {
     return jsonPost("/scripts/generate", req);
   },
@@ -79,5 +108,14 @@ export const api = {
       throw new Error(err.error ?? `Request failed: ${res.status}`);
     }
     return res.json() as Promise<EpisodeRecord>;
+  },
+
+  async getDocument(id: string): Promise<{ documentId: string; filename: string; charCount: number; pageCount?: number; extractedText: string }> {
+    const res = await fetch(`/documents/${id}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error ?? `Request failed: ${res.status}`);
+    }
+    return res.json();
   },
 };

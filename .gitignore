@@ -6,3 +6,7 @@ data/
 *.log
 .DS_Store
 manifest.json
+
+# Project brief (local context, not committed)
+BRIEF.md
+

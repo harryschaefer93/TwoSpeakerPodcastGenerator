@@ -40,6 +40,10 @@ export interface ScriptGenerationRequest {
   title?: string;
   tone?: string;
   targetMinutes?: number;
+  /** Extracted text from an uploaded source document (document-grounded mode). */
+  sourceText?: string;
+  /** Ordered key themes for the discussion arc — produced by /scripts/themes. */
+  themes?: string[];
 }
 
 export interface ScriptGenerationResponse {

@@ -17,6 +17,7 @@ export default defineConfig({
     proxy: {
       '/scripts': 'http://localhost:3000',
       '/episodes': 'http://localhost:3000',
+      '/documents': 'http://localhost:3000',
       '/health': 'http://localhost:3000',
     },
   },

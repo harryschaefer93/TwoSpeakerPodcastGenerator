@@ -5,9 +5,10 @@ interface Props {
   title: string;
   script: ScriptTurn[];
   onUpdate: (title: string, script: ScriptTurn[]) => void;
+  stepOffset?: number;
 }
 
-export function ScriptEditor({ title, script, onUpdate }: Props) {
+export function ScriptEditor({ title, script, onUpdate, stepOffset = 1 }: Props) {
   const [jsonMode, setJsonMode] = useState(false);
   const [jsonText, setJsonText] = useState("");
 
@@ -56,7 +57,7 @@ export function ScriptEditor({ title, script, onUpdate }: Props) {
   if (jsonMode) {
     return (
       <section className="panel">
-        <h2>2. Edit Script <button className="btn-small" onClick={() => setJsonMode(false)}>Visual</button></h2>
+        <h2>{stepOffset + 1}. Edit Script <button className="btn-small" onClick={() => setJsonMode(false)}>Visual</button></h2>
         <textarea
           className="json-editor"
           rows={20}
@@ -71,7 +72,7 @@ export function ScriptEditor({ title, script, onUpdate }: Props) {
   return (
     <section className="panel">
       <h2>
-        2. Edit Script
+        {stepOffset + 1}. Edit Script
         <button className="btn-small" onClick={switchToJson}>JSON</button>
       </h2>
       <label>
